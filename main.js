@@ -18,3 +18,4 @@ var command = require('./function/command');
 command.firstSay(client);
 command.statusMyAccount(client);
 command.login(client);
+command.test(client);
