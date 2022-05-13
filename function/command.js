@@ -1,10 +1,6 @@
 //require package
 const axios = require('axios').default;
-const connect = require("../db/db");
-
-//new paramater
-var tagname = '';
-var tagline = '';
+const db = require("../db/db");
 
 //command first say
 function firstSay(client) {
@@ -22,14 +18,14 @@ function firstSay(client) {
      client.on('message',
        async (msg)=>{
             if(msg.content === "Vmy"){
-                //check info empty
-                if (tagname == '' || tagline == '') {
+                var user = await db.getInfoUser(msg.author.id);
+                if (!user) {
                     msg.reply("Bạn Chưa Đăng Nhập !!");
                     return;
                 }
 
                 try {
-                    await handleApi(msg,tagname,tagline,force);
+                    await handleApi(msg,user.name,user.tagline,force);
                 } catch (error) {
                     console.error(error);
                     msg.reply("Thông Tin Tài Khoản Không Hợp Lệ !!");
@@ -40,6 +36,7 @@ function firstSay(client) {
 
 //handle api
 const handleApi = async (msg,tagname,tagline,force) =>{
+    var groupString = "";
     //get uuid account by tagname + tagline
     let dataPUUID = await axios.get('https://api.henrikdev.xyz/valorant/v1/account/'+encodeURI(tagname)+'/'+encodeURI(tagline)+'?force='+force);
                 
@@ -49,12 +46,14 @@ const handleApi = async (msg,tagname,tagline,force) =>{
     }
     //get info account by uuid
     let response = await axios.get('https://api.henrikdev.xyz/valorant/v1/by-puuid/mmr/ap/'+dataPUUID.data.data.puuid);
-    var infoMSG = "``` \nTên In Game: "+dataPUUID.data.data.name+"#"+dataPUUID.data.data.tag
-    +"\nLevel In Game: "+dataPUUID.data.data.account_level
-    +"\nRank: "+(response.data.data.currenttierpatched??"none")
-    +"\nVị Trí Rank: "+(response.data.data.ranking_in_tier??"none")
-    +"\nElo: "+(response.data.data.elo??"none")+"```";
-    msg.reply(infoMSG);
+
+    //set message
+    groupString += "```\n";
+    groupString += "Tên In Game: "+dataPUUID.data.data.name+"#"+dataPUUID.data.data.tag
+                +"\nLevel In Game: "+dataPUUID.data.data.account_level
+                +"\nRank: "+(response.data.data.currenttierpatched??"none")
+                +"\nVị Trí Rank: "+(response.data.data.ranking_in_tier??"none")
+                +"\nElo: "+(response.data.data.elo??"none");
 
     //get DataAssetID
     var store_featured = await axios.get("https://api.henrikdev.xyz/valorant/v1/store-featured");
@@ -83,26 +82,34 @@ const handleApi = async (msg,tagname,tagline,force) =>{
     }
     //end loop
 
-    msg.reply("Tên Gói Súng: "+store_img.data.data.displayName+"\nTổng Giá Gói Súng Giảm Giá: "+sumDiscountedPrice);
-    await msg.channel.send({files: [store_img.data.data.displayIcon2]});
+    groupString += "\n-------------------------------------\n";
+    groupString += "Tên Gói Súng: "+store_img.data.data.displayName+"\nTổng Giá Gói Súng Giảm Giá: "+sumDiscountedPrice;
+    groupString += "\n****************\n";
     
     //get list image & video
     var arrImages = [];
     var arrVideos = [];
+
     //set table show message
-    var msgItems = "```\nTên Súng\t\t|\t\tGiá\n";
+    var ten_sung = "Tên Súng";
+    var gia = "Giá";
+    groupString += ten_sung+"|".padStart(25-ten_sung.length)+gia.padStart(15)+"\n";
+
     dataItems.forEach(item => {
-        msgItems += item.displayName+"\t\t|\t\t"+item.BasePrice+"\n";
+        groupString += item.displayName+"|".padStart(25-item.displayName.length)+item.BasePrice.toString().padStart(15)+"\n";
         arrImages.push(item.displayIcon);
         arrVideos.push(item.streamedVideo);
     });
-    msgItems += "```";
+    groupString += "```";
     //reply message info item
-    msg.reply(msgItems);
+    msg.reply(groupString);
+
+    //send banner package gun
+    await msg.channel.send({files: [store_img.data.data.displayIcon2]});
     //send list image
     await msg.channel.send({files: arrImages});
     //send list video demo Gun
-    await msg.channel.send({files: arrVideos});
+    // await msg.channel.send({files: arrVideos});
 
 }
 
@@ -112,11 +119,31 @@ const login = async (client)=>{
         if (message.content.startsWith('Vlogin')) {
             var arrString = message.content.replaceAll(/\s/g,'').split("!");
             if (arrString.length != 3) {
-                msg.reply("Tài khoản không hợp lệ !!");
+                message.reply("Tài khoản không hợp lệ !!");
                 return;
             }
             tagname = arrString[1];
             tagline = arrString[2];
+
+            var user = await db.getInfoUser(message.author.id);
+            //check user exists in DB
+            if(user){
+                //check update user
+                var is = await db.updateInfoUser(message.author.id,tagname,tagline);
+                if(!is){
+                    message.reply("Không Thể Lưu Thông Tin Người Dùng !!");
+                    return;
+                }
+                message.reply("Đã Cập Nhập Thông Tin Người Dùng !!");
+                return;
+            }
+            //check add user to DB
+            var is = await db.insertUser(message.author.id,tagname,tagline);
+            if (!is) {
+                message.reply("Không Thể Lưu Thông Tin Người Dùng !!");
+                return;
+            }
+            
             message.reply("Đã Lưu Thông Tin Người Dùng !!");
         }
     });
@@ -126,11 +153,9 @@ const login = async (client)=>{
 const test = (client)=>{
     client.on("message", async msg=>{
         if (msg.content === "Vtest") {
-            // msg.reply("Bot Tested !!");
-            await connect.connect_db();
-            // console.log("show user id 2: ",msg.author);
+            db.truncate();
         }
-    })
+    });
 }
 module.exports = {
     firstSay: firstSay,
