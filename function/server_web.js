@@ -7,9 +7,9 @@ const PORT = 3000;
 
 const server = ()=>{
     app.get("/riot.txt",(req,res)=>{
-        res.send(process.env.KEY_RIOT);
+        res.render(process.env.KEY_RIOT);
     });
-    app.listen(PORT,()=>console.log("App listen on PORT="+PORT));
+    app.listen(PORT || 3000,()=>console.log("App listen on PORT="+PORT));
 }
 
 module.exports={
