@@ -26,7 +26,7 @@ const server = ()=>{
         
         
     })
-    .listen(80,"localhost",()=>{
+    .listen(80,"https://v-bot-discord.herokuapp.com",()=>{
         console.log("server is running");
     });
 }
