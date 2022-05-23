@@ -21,7 +21,7 @@ const server = ()=>{
         
         
     })
-    .listen(3000,()=>{
+    .listen(5000,()=>{
         console.log("server is running");
     });
 }
