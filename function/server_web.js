@@ -10,14 +10,8 @@ const server = ()=>{
         res.setHeader("Content-Type", "text/html");
         switch (req.url) {
             case "/riot.txt":
-                try {
-                    res.writeHead(200);
-                    res.end(process.env.KEY_RIOT);
-                } catch (error) {
-                    res.writeHead(500);
-                    res.end(error);
-                    return;
-                }
+                res.writeHead(200);
+                res.end(process.env.KEY_RIOT);
                 break;
             default:
                 res.writeHead(404);
