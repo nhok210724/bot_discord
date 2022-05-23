@@ -1,3 +1,5 @@
+//ENV import
+require('dotenv').config();
 //import http server
 var http = require("http");
 //import fs read file
@@ -9,9 +11,8 @@ const server = ()=>{
         switch (req.url) {
             case "/riot.txt":
                 try {
-                    const contents = fs.readFileSync("db/riot.txt","utf-8");
                     res.writeHead(200);
-                    res.end(contents);
+                    res.end(process.env.KEY_RIOT);
                 } catch (error) {
                     res.writeHead(500);
                     res.end(error);
