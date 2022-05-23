@@ -4,7 +4,8 @@
   "description": "A discord bot for the valorant discord channel",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "echo Done"
   },
   "keywords": [
     "discord",
