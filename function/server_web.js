@@ -1,29 +1,15 @@
 //ENV import
 require('dotenv').config();
-//import http server
-var http = require("http");
-//import fs read file
-var fs = require('fs');
+//express sever
+const express = require("express");
+const app = express();
+const PORT = 3000;
 
 const server = ()=>{
-    http.createServer((req,res)=>{
-        res.setHeader("Content-Type", "text/html");
-        switch (req.url) {
-            case "/riot.txt":
-                res.writeHead(200);
-                res.end(process.env.KEY_RIOT);
-                break;
-            default:
-                res.writeHead(404);
-                res.end("Not Found");
-                break;
-        }
-        
-        
-    })
-    .listen(5000,()=>{
-        console.log("server is running");
+    app.get("/riot.txt",(req,res)=>{
+        res.send(process.env.KEY_RIOT);
     });
+    app.listen(PORT,()=>console.log("App listen on PORT="+PORT));
 }
 
 module.exports={
