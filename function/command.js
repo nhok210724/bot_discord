@@ -153,7 +153,7 @@ const login = async (client)=>{
 const test = (client)=>{
     client.on("message", async msg=>{
         if (msg.content === "Vtest") {
-            db.truncate();
+            // db.truncate();
         }
     });
 }

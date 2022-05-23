@@ -1,6 +1,12 @@
 // Setup our environment variables via dotenv
 require('dotenv').config();
 
+//import server web
+var server = require('./function/server_web');
+
+//run server
+server.server();
+
 // Import relevant classes from discord.js
 const { Client, Intents } = require('discord.js');
 // Instantiate a new client with some necessary parameters.
@@ -14,6 +20,7 @@ client.on('ready', function(e){
 // Authenticate
 client.login(process.env.DISCORD_TOKEN);
 
+//import command bot
 var command = require('./function/command');
 command.firstSay(client);
 command.statusMyAccount(client);
