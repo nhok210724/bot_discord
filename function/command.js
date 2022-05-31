@@ -1,6 +1,7 @@
 //require package
 const axios = require('axios').default;
 const db = require("../db/db");
+const helper = require("../helper/common")
 
 //command first say
 function firstSay(client) {
@@ -23,13 +24,7 @@ function firstSay(client) {
                     msg.reply("Bạn Chưa Đăng Nhập !!");
                     return;
                 }
-
-                try {
-                    await handleApi(msg,user.name,user.tagline,force);
-                } catch (error) {
-                    console.error(error);
-                    msg.reply("Thông Tin Tài Khoản Không Hợp Lệ !!");
-                }
+                await handleApi(msg,user.name,user.tagline,force);               
             }   
     });
 }
@@ -37,15 +32,27 @@ function firstSay(client) {
 //handle api
 const handleApi = async (msg,tagname,tagline,force) =>{
     var groupString = "";
-    //get uuid account by tagname + tagline
-    let dataPUUID = await axios.get('https://api.henrikdev.xyz/valorant/v1/account/'+encodeURI(tagname)+'/'+encodeURI(tagline)+'?force='+force);
+   
+    try {
+        //get uuid account by tagname + tagline
+        var dataPUUID = await axios.get('https://api.henrikdev.xyz/valorant/v1/account/'+encodeURI(tagname)+'/'+encodeURI(tagline)+'?force='+force);
+    } catch (error) {
+        console.log("Không có thông tin tài khoản");
+    }
+    
                 
     if(!dataPUUID.data.data){
         msg.reply("Không có thông tin tài khoản !!");
         return;
     }
-    //get info account by uuid
-    let response = await axios.get('https://api.henrikdev.xyz/valorant/v1/by-puuid/mmr/ap/'+dataPUUID.data.data.puuid);
+
+    try {
+        //get info account by uuid
+        var response = await axios.get('https://api.henrikdev.xyz/valorant/v1/by-puuid/mmr/ap/'+dataPUUID.data.data.puuid);
+    } catch (error) {
+        console.log("ID Account Error !!");
+    }
+    
 
     //set message
     groupString += "```\n";
@@ -55,27 +62,45 @@ const handleApi = async (msg,tagname,tagline,force) =>{
                 +"\nVị Trí Rank: "+(response.data.data.ranking_in_tier??"none")
                 +"\nElo: "+(response.data.data.elo??"none");
 
-    //get DataAssetID
-    var store_featured = await axios.get("https://api.henrikdev.xyz/valorant/v1/store-featured");
+    try {
+        //get DataAssetID
+        var store_featured = await axios.get("https://api.henrikdev.xyz/valorant/v1/store-featured");
+    } catch (error) {
+        console.log("Store-featured Error !!");
+    }
+    
+    
     if (!store_featured.data.data.FeaturedBundle.Bundle.DataAssetID) {
         msg.reply("Hệ Thống Phát Hiện Ra Lỗi, Ngừng Hoạt Động !!");
         return;
     }
-    //get info package by DataAssetID
-    var store_img = await axios.get("https://valorant-api.com/v1/bundles/"+store_featured.data.data.FeaturedBundle.Bundle.DataAssetID);
+
+    try {
+        //get info package by DataAssetID
+        var store_img = await axios.get("https://valorant-api.com/v1/bundles/"+store_featured.data.data.FeaturedBundle.Bundle.DataAssetID);
+    } catch (error) {
+        console.log("Bundles ID Error !!");
+    }
 
     var dataItems = [];
     var sumDiscountedPrice = 0;
 
     //loop items get ItemID
     for (const item of store_featured.data.data.FeaturedBundle.Bundle.Items) {
-        var dataItem = await axios.get("https://valorant-api.com/v1/weapons/skinlevels/"+item.Item.ItemID);
 
+        try {
+            //get info package by DataAssetID
+            var dataItem = await axios.get("https://valorant-api.com/v1/weapons/skinlevels/"+item.Item.ItemID);
+        } catch (error) {
+            console.log("Weapons skinlevels ID Error !!");
+            continue;
+        }
+        
         var objItem = {
             "BasePrice" : item.BasePrice,
             "displayName" : dataItem.data.data.displayName,
             "displayIcon" : dataItem.data.data.displayIcon,
-            "streamedVideo" : dataItem.data.data.streamedVideo,
+            // "streamedVideo" : dataItem.data.data.streamedVideo,
         };
         sumDiscountedPrice += item.DiscountedPrice;
         dataItems.push(objItem);
@@ -83,12 +108,15 @@ const handleApi = async (msg,tagname,tagline,force) =>{
     //end loop
 
     groupString += "\n-------------------------------------\n";
-    groupString += "Tên Gói Súng: "+store_img.data.data.displayName+"\nTổng Giá Gói Súng Giảm Giá: "+sumDiscountedPrice;
+    groupString += "Tên Gói Súng: "+store_img.data.data.displayName
+                +"\nTổng Giá Gói Súng Giảm Giá: "
+                +sumDiscountedPrice+"\nTime Out: "
+                + helper.secondsToDhms(store_featured.data.data.FeaturedBundle.BundleRemainingDurationInSeconds??0);
     groupString += "\n****************\n";
     
     //get list image & video
     var arrImages = [];
-    var arrVideos = [];
+    // var arrVideos = [];
 
     //set table show message
     var ten_sung = "Tên Súng";
@@ -98,7 +126,7 @@ const handleApi = async (msg,tagname,tagline,force) =>{
     dataItems.forEach(item => {
         groupString += item.displayName+"|".padStart(25-item.displayName.length)+item.BasePrice.toString().padStart(15)+"\n";
         arrImages.push(item.displayIcon);
-        arrVideos.push(item.streamedVideo);
+        // arrVideos.push(item.streamedVideo);
     });
     groupString += "```";
     //reply message info item
