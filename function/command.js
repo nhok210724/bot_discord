@@ -32,16 +32,20 @@ function firstSay(client) {
 //handle api
 const handleApi = async (msg,tagname,tagline,force) =>{
     var groupString = "";
-   
-    try {
-        //get uuid account by tagname + tagline
-        var dataPUUID = await axios.get('https://api.henrikdev.xyz/valorant/v1/account/'+encodeURI(tagname)+'/'+encodeURI(tagline)+'?force='+force);
-    } catch (error) {
-        console.log("Không có thông tin tài khoản");
+
+    var data_PUUID = async ()=>{
+        try {
+            //get uuid account by tagname + tagline
+            return await axios.get('https://api.henrikdev.xyz/valorant/v1/account/'+encodeURI(tagname)+'/'+encodeURI(tagline)+'?force='+force);
+        } catch (error) {
+            msg.reply("Không có thông tin tài khoản");
+            return null;
+        }
     }
+
+    var dataPUUID = await data_PUUID();
     
-                
-    if(!dataPUUID.data.data){
+    if(!dataPUUID || !dataPUUID.data.data){
         msg.reply("Không có thông tin tài khoản !!");
         return;
     }
