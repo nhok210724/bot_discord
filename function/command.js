@@ -165,7 +165,7 @@ const handleApiStore = async (msg) =>{
 const login = async (client) =>{
     client.on("message",async message => {
         if (message.content.startsWith('Vlogin')) {
-            var arrString = message.content.replaceAll(/\s/,'').split("!");
+            var arrString = message.content.replaceAll(/\s/g,'').split("!");
             if (arrString.length != 3) {
                 message.reply("Tài khoản không hợp lệ !!");
                 return;
